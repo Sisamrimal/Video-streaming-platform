@@ -27,6 +27,10 @@ model User {
   image     String?
   createdAt DateTime @default(now())
 
+  // ⭐ password reset
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
+
   // Relationships
   videos        Video[]
   comments      Comment[]
