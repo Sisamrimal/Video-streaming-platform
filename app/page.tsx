@@ -1,0 +1,9 @@
+export default function Home() {
+  return (
+    <main className="p-6">
+      <h1 className="text-2xl font-semibold">
+        YouTube Clone
+      </h1>
+    </main>
+  );
+}
