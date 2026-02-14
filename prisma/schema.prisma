@@ -8,3 +8,87 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+
+
+// 1. Added Enum for Video Status
+enum VideoStatus {
+  PROCESSING
+  READY
+  ERROR
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  image     String?
+  createdAt DateTime @default(now())
+
+  // Relationships
+  videos        Video[]
+  comments      Comment[]
+  likes         Like[]
+  subscriptions Subscription[] @relation("subscriber")
+  subscribers   Subscription[] @relation("creator")
+}
+
+model Video {
+  id           String      @id @default(cuid())
+  title        String
+  description  String?
+  videoUrl     String      // The raw file link (S3/UploadThing)
+  thumbnailUrl String?
+  
+  // 2. Added Mux fields for professional streaming
+  muxAssetId   String?     @unique
+  muxPlaybackId String?    @unique
+  
+  // 3. Added Status tracking
+  status       VideoStatus @default(PROCESSING)
+  
+  views        Int         @default(0)
+  createdAt    DateTime    @default(now())
+
+  userId       String
+  // Added onDelete: Cascade - If User is deleted, delete their videos
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  comments     Comment[]
+  likes        Like[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+
+  userId    String
+  videoId   String
+
+  // Cascade: If User or Video is deleted, delete the comments
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
+
+model Like {
+  id        String @id @default(cuid())
+  userId    String
+  videoId   String
+
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video     Video  @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId])
+}
+
+model Subscription {
+  id           String @id @default(cuid())
+  subscriberId String
+  creatorId    String
+
+  subscriber   User   @relation("subscriber", fields: [subscriberId], references: [id], onDelete: Cascade)
+  creator      User   @relation("creator", fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriberId, creatorId])
+}
