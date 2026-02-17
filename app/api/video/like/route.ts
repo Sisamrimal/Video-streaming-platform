@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-
-import {db} from "@/lib/db";
+import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -13,7 +12,7 @@ export async function POST(req: Request) {
 
   const { videoId } = await req.json();
 
-  const existingLike = await prisma.like.findUnique({
+  const existingLike = await db.like.findUnique({
     where: {
       userId_videoId: {
         userId: session.user.id,
@@ -22,13 +21,12 @@ export async function POST(req: Request) {
     },
   });
 
-  // Toggle Like
   if (existingLike) {
-    await prisma.like.delete({
+    await db.like.delete({
       where: { id: existingLike.id },
     });
   } else {
-    await prisma.like.create({
+    await db.like.create({
       data: {
         userId: session.user.id,
         videoId,
@@ -36,7 +34,7 @@ export async function POST(req: Request) {
     });
   }
 
-  const likeCount = await prisma.like.count({
+  const likeCount = await db.like.count({
     where: { videoId },
   });
 
