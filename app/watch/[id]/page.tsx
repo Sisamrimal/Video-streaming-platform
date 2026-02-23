@@ -3,6 +3,7 @@ import LikeButton from "@/components/LikeButton";
 import CommentSection from "@/components/CommentSection";
 import SubscribeButton from "@/components/SubscribeButton";
 import ViewUpdater from "@/components/ViewUpdater";
+import Link from "next/link";
 
 
 import { getServerSession } from "next-auth";
@@ -20,36 +21,19 @@ export default async function WatchPage({
 
   /* ================= VIDEO QUERY ================= */
   const video = await db.video.findUnique({
-    where: { id },
-    include: {
-      user: {
-        include: {
-          subscribers: session?.user?.id
-            ? {
-                where: {
-                  subscriberId: session.user.id,
-                },
-              }
-            : false,
-        },
-      },
-
-      comments: {
-        include: {
-          user: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
-
-      _count: {
-        select: {
-          likes: true,
-        },
-      },
+  where: { id },
+  include: {
+    user: true, // ✅ just fetch creator info
+    comments: {
+      include: { user: true },
+      orderBy: { createdAt: "desc" },
     },
-  });
+    _count: { select: { likes: true } },
+  },
+});
+
+
+
 
   if (!video) {
     return <div className="p-10">Video not found</div>;
@@ -88,9 +72,12 @@ export default async function WatchPage({
           <div className="flex items-center justify-between mt-4 flex-wrap gap-4">
             {/* CHANNEL INFO */}
             <div>
-              <p className="font-medium text-lg">
-                {video.user.name || "Creator"}
-              </p>
+              <Link href={`/channel/${video.user.id}`}>
+  <p className="font-semibold hover:text-blue-600 cursor-pointer">
+    {video.user.name}
+  </p>
+</Link>
+
 
               <p className="text-sm text-neutral-400">
                 {video.views} views
@@ -117,7 +104,7 @@ export default async function WatchPage({
 
           {/* DESCRIPTION */}
           {video.description && (
-            <div className="mt-4 p-4 rounded-xl bg-neutral-900 text-sm leading-relaxed">
+            <div className="mt-4 p-4 rounded-xl bg-orange-500 text-sm leading-relaxed">
               {video.description}
             </div>
           )}
